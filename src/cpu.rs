@@ -5,7 +5,6 @@ pub struct Cpu {
     pub status: u8,
     pub program_counter: ProgramCounter,
 }
-
 impl Default for Cpu{
     fn default() -> Self {
         Self{
@@ -17,7 +16,15 @@ impl Default for Cpu{
     }
 }
 
-struct ProgramCounter(u16);
+pub struct ProgramCounter(u16);
+
+
+impl From::<ProgramCounter> for usize {
+    fn from(pc: ProgramCounter) -> usize {
+        pc.0 as usize
+    }
+}
+
 
 struct Program {
     data: Vec<OpCode>
@@ -43,11 +50,15 @@ impl Cpu {
         self.program_counter = ProgramCounter(0);
 
         loop {
-            let opscode: OpCode = program[self.program_counter as usize]; // todo convert to opcode
+            let opscode  = program[self.program_counter.0 as usize]; // todo convert to opcode
+            // let opscode  = program[self.program_counter.into::<usize>()]; // todo convert to opcode
             self.program_counter.next();
             match opscode {
-                OpCode::_0xA9 => {
-                    let param = program[self.program_counter];
+                0x00=> {
+                    return;
+                },
+                0xA9=> {
+                    let param = program[self.program_counter.0 as usize];
                     self.program_counter.next();
                     self.register_a = param;
 
@@ -63,12 +74,43 @@ impl Cpu {
                     }
 
                 }
+                1_u8..=168_u8 | 170_u8..=u8::MAX => todo!()
             }
         }
     }
 }
 
 enum OpCode {
-    _0xA9
+    _0x00 = 0x00,
+    _0xA9 = 0xA9,
 
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_cpu() {
+        let mut cpu = Cpu::default();
+        cpu.interpret(vec![0xA9, 0x05, 0x00]);
+        assert_eq!(cpu.register_a, 0x05);
+        assert_eq!(cpu.status, 0b0000_0000);
+    }
+
+    #[test]
+    fn test_cpu_zero_flag() {
+        let mut cpu = Cpu::default();
+        cpu.interpret(vec![0xA9, 0x00, 0x00]);
+        assert_eq!(cpu.register_a, 0x00);
+        assert_eq!(cpu.status, 0b0000_0010);
+    }
+
+    #[test]
+    fn test_cpu_negative_flag() {
+        let mut cpu = Cpu::default();
+        cpu.interpret(vec![0xA9, 0x80, 0x00]);
+        assert_eq!(cpu.register_a, 0x80);
+        assert_eq!(cpu.status, 0b1000_0000);
+    }
 }
