@@ -1,4 +1,5 @@
 use std::ops::Index;
+use super::op_code::OpCode;
 
 pub struct Cpu {
     pub register_a: u8,
@@ -78,12 +79,6 @@ impl Cpu {
             }
         }
     }
-}
-
-enum OpCode {
-    _0x00 = 0x00,
-    _0xA9 = 0xA9,
-
 }
 
 #[cfg(test)]
